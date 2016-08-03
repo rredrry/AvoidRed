@@ -1,0 +1,717 @@
+<html><head><style type="text/css">p {color:darkgrey;}</style>     <title>Scratchpad (KA-mode)(javaScript)</title> <style type="text/css">@font-face {
+  font-family: "PjsEmptyFont";
+  src: url('data:application/x-font-ttf;base64,AAEAAAAKAIAAAwAgT1MvMgAAAAAAAAEoAAAAVmNtYXAAAAAAAAABiAAAACxnbHlmAAAAAAAAAbwAAAAkaGVhZAAAAAAAAACsAAAAOGhoZWEAAAAAAAAA5AAAACRobXR4AAAAAAAAAYAAAAAGbG9jYQAAAAAAAAG0AAAABm1heHAAAAAAAAABCAAAACBuYW1lAAAAAAAAAeAAAAAgcG9zdAAAAAAAAAIAAAAAEAABAAAAAQAAAkgTY18PPPUACwAgAAAAALSRooAAAAAAyld0xgAAAAAAAQABAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAEAAAACAAIAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACMAIwAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAMAAQAAAAwABAAgAAAABAAEAAEAAABB//8AAABB////wAABAAAAAAAAAAgAEgAAAAEAAAAAAAAAAAAAAAAxAAABAAAAAAABAAEAAQAAMTcBAQAAAAAAAgAeAAMAAQQJAAEAAAAAAAMAAQQJAAIAAgAAAAAAAQAAAAAAAAAAAAAAAAAA')
+       format('truetype');
+}</style></head> <body style="background: rgb(212,212,212); text-align: center">    <canvas id="mycanvas" tabindex="0" width="800" height="600" style="image-rendering: -webkit-optimize-contrast !important;"></canvas><br><br>  <script src="processing-1.4.1.min.js"></script> <script>
+var sketchProc=function(processingInstance){ with (processingInstance){
+size(800, 600); 
+background(255);
+frameRate(30);
+var mouseIsPressed=false;
+angleMode="degrees";
+var mousePressed=function(){};
+var mouseReleased=function(){};
+
+//Press the dot of the i in the title :)
+
+//optimization for universal processing.JS & multiple keys & key once
+var mouseIsPressed=false;
+var keyIsPressed=false;
+var scrnSize=[800,600];
+var keyOnce=[];
+
+var keys=[];
+//  ^mouse
+mousePressed=function(){mouseIsPressed=true;};
+mouseReleased=function(){mouseIsPressed=false;};
+//  ^key
+var keyPressed=function(){keyIsPressed=true;keys[keyCode]=true;};
+var keyReleased=function(){keyIsPressed=false;keys[keyCode]=false;keyOnce[keyCode]=true;};
+
+//mouseOn function
+var mouseOnRect=function(x,y,l,h,a){
+if(mouseX>x&&mouseX<x+l&&mouseY>y&&mouseY<y+h){
+if(a===true){
+cursor(HAND);
+}
+return true;
+}else{
+return false;
+}
+};
+
+//findSlope function
+var findSlope=function(x,y,x2,y2){
+var slope = (y2-y)/(x2-x);
+slope*=-1;
+return slope;
+};
+//finds a random spot on the screen
+var someWhereRandom=function(){
+return [random(0,scrnSize[0]),random(0,scrnSize[1])];
+};
+var mouseIsClicked=false;
+mouseClicked=function(){
+mouseIsClicked=true;
+};
+//fonts
+var F={
+normal:createFont('Arial',0),
+big:createFont('Arial Black',0),
+op:createFont('Palatino Linotype',0),
+sym:createFont('Symbol',0),
+basic:createFont('Sans-Serif',0),
+info:createFont('Courier',0)
+};
+var RED={
+obj:{ //objects
+ell: [], //ellipse
+sking: [], //seeking ellipses
+sqr: [], //rect
+},
+
+weap:{ //weapons
+
+cann: { //cannons
+norm: [], //normal cannon
+sking: [] //seeking canno
+},
+
+las: [] //laser
+}
+};
+
+//character object
+var char={
+X: 201,
+Y: 401,
+XM: 0,
+YM: 0,
+speed: 0.2
+};
+
+//other variables
+var gameState='title';
+var dev=0;
+var deved=false;
+var next=[];
+var ticker=0;
+var cap=200;
+var danger=false;
+var remove=false;
+var health=100;
+var score=0;
+var highscore=0;
+var generated='';
+var maxSpeed=3;
+var damage=function(){
+health+=-1;
+//println(Math.random());
+};
+var gen=function(w,p,p2){
+var mul=1;
+if(!danger){
+mul=2;
+}
+var test=w>-1;
+var testP=[p>-1,p2>-1];
+if(!test){
+w=round(random(0,7));
+}
+generated+=w;
+if(!testP[0]&&!testP[1]){
+p=next[0];
+p2=next[1];
+}
+if(w===1||w===2||w===0){
+score+=1*mul;
+RED.obj.ell.push([p,p2,(char.X-p)/(dist(char.X,char.Y,p,p2)/5),(char.Y-p2)/(dist(char.X,char.Y,p,p2)/5)]);
+}
+if(w===3){
+score+=5*mul;
+RED.obj.sking.push([p,p2,200]);
+}
+if(w===5||w===4){
+score+=20*mul;
+RED.weap.cann.norm.push([p,p2,0,80]);
+}
+if(w===7){
+score+=20*mul;
+RED.weap.cann.sking.push([p,p2,0,200]);
+}
+if(w===6){
+score+=20*mul;
+RED.weap.las.push([p,p2,p,p2]);
+}
+};
+var exOff=[0,0];
+draw = function() {
+if(frameCount>30){
+cursor();
+}
+noStroke();
+fill(212, 212, 212,100);
+rect(-2,-2,scrnSize[0]+5,scrnSize[1]+5);
+if(gameState==='dev'){
+fill(0, 0, 0);
+textFont(F.normal,20);
+text('This game was independently developed\non Khan Academy over the course of\n3 days by diagram1111.\n\nSee more of his 2014 games at\n\
+\n\nFor real things, find the Steam ID rred0\nand rredrry on github.\n\nThis is all just a bad port to a higher res \ncoded forever ago.',17,24);
+textFont(createFont('Arial',0),17);
+fill(50, 31, 202);
+stroke(50, 31, 202);
+if(mouseOnRect(17,121,375,15,true)){
+fill(80, 12, 112);
+stroke(80, 12, 112);
+if(mouseIsClicked){
+println('http://www.khanacademy.org/profile/diagram1111');
+}
+}
+text('http://www.khanacademy.org/profile/diagram1111',17,134);
+strokeWeight(2);
+line(18,136,390,136);
+noStroke();
+fill(0, 0, 0);
+textFont(F.op,20);//339 365 373 378
+if(mouseOnRect(339, 365, 40,15,true)){
+fill(34, 168, 27);
+text('Exit',340,380);
+if(mouseIsClicked){
+gameState='title';
+}
+}
+text('Exit',339.5,380);
+}
+if(gameState==='ins3'){
+fill(0, 0, 0);
+textFont(F.normal,20);
+text('This is a cannon \n                       -->             It shoots basic\nprojectiles at you periodically.\n\nThis is a seeking cannon --->\n   It shoots seeking projectiles at you, less\n   frequently than the normal cannon',20,60);
+text('This is a laser\n    <--',117,243);
+text('It has a slow-moving, seeking red beam.\nThey are deadly in multiples.\n\nThat\'s about it. Good luck!',17,284);
+textFont(F.op,20);//339 365 373 378
+if(mouseOnRect(339, 365, 40,15,true)){
+fill(34, 168, 27);
+text('Exit',340,380);
+if(mouseIsClicked){
+gameState='title';
+}
+}
+text('Exit',339.5,380);
+var dCan=[200,63];
+fill(54, 54, 54);
+rect(dCan[0],dCan[1],20,20);
+fill(145, 145, 145);
+ellipse(dCan[0]+10,dCan[1]+10,25,25);
+fill(105, 105, 105);
+rect(dCan[0]+3.5,dCan[1]+3.5,13,13);
+dCan=[290,135];
+fill(18, 18, 18);
+rect(dCan[0],dCan[1],20,20);
+fill(145, 145, 145);
+ellipse(dCan[0]+10,dCan[1]+10,25,25);
+fill(212, 40, 40);
+rect(dCan[0]+3.5,dCan[1]+3.5,13,13);
+stroke(255, 0, 0);
+strokeWeight(1.5);
+dCan=[57,246,126,258];
+fill(0, 0, 0);
+ellipse(dCan[0],dCan[1],20,20);
+fill(255, 0, 0,20);
+var dPoint=[dCan[0]+random(-15,15),dCan[1]];
+var ln;
+triangle(dPoint[0],dPoint[1],dCan[0]+random(-15,15),dCan[1]+random(-15,15),dCan[0]+random(-15,15),dCan[1]+random(-15,15));
+fill(0, 0, 0);
+strokeWeight(4);
+stroke(255, 0, 0);
+line(dCan[0],dCan[1],dCan[2],dCan[3]);
+}
+if(gameState==='ins2'){
+fill(0, 0, 0);
+textFont(F.normal,20);
+text('You are made up of two parts. The light\n\"halo\" around you and your body.\nWhen things spawn, your score increases.\n\nDamaging objects touching the halo will\ndrastically reduce the rate at which your\nscore increases\n\nDamaging objects touching your body will \ndecrease your health\n\n\nShown above is a projectile. There are two\ntypes: basic projectiles that continue along\nthe path they were shot, and seeking\nprojectiles',10,25);
+textFont(F.op,20);
+if(mouseOnRect(289, 365, 95,15,true)){
+fill(255, 0, 136);
+text('Next Page',289.5,380);
+if(mouseIsClicked){
+gameState='ins3';
+}
+}
+text('Next Page',289,380);
+fill(255, 0, 0);
+ellipse(200,252,10,10);
+fill(255, 0, 0,100);
+ellipse(208,261,10,10);
+fill(255, 0, 0,28);
+ellipse(216,269,10,10);
+}
+if(gameState==='ins'){
+fill(0, 0, 0);
+textFont(F.normal,20);
+text('This is you -->',114,50);
+text('Use the arrow keys to move.',35,110);
+text('Pressing Z will reverse the direction you\nare moving in.',14,187);
+text('this is the warning symbol',5,265);
+text('a bit after appearing, it will spawn a\n  dangerous object in its place. stay away!',5,310);
+textFont(F.op,20);
+if(mouseOnRect(289, 365, 95,15,true)){
+fill(255, 0, 136);
+text('Next Page',289.5,380);
+if(mouseIsClicked){
+gameState='ins2';
+}
+}
+//289 365 382
+text('Next Page',289,380);
+fill(255, 0, 0);
+textFont(F.op,29);
+text("!",218,289);
+fill(161, 161, 161);
+if(mouseOnRect(146,145,20,20,true)){
+fill(189, 189, 189);
+if(mouseIsPressed){
+fill(92, 92, 92);
+exOff[0]-=1.5;
+}
+}
+rect(146,145,20,20,5);
+fill(161, 161, 161);
+if(mouseOnRect(194,145,20,20,true)){
+fill(189, 189, 189);
+if(mouseIsPressed){
+fill(92, 92, 92);
+exOff[0]+=1.5;
+}
+}
+rect(194,145,20,20,5);
+fill(161, 161, 161);
+if(mouseOnRect(170,145,20,20,true)){
+fill(189, 189, 189);
+if(mouseIsPressed){
+fill(92, 92, 92);
+exOff[1]+=1.5;
+}
+}
+if(keys[RIGHT]){
+exOff[0]+=1.5;
+}
+if(keys[LEFT]){
+exOff[0]-=1.5;
+}
+if(keys[UP]){
+exOff[1]-=1.5;
+}
+if(keys[DOWN]){
+exOff[1]+=1.5;
+}
+rect(170,145,20,20,5);
+fill(161, 161, 161);
+if(mouseOnRect(170,122,20,20,true)){
+fill(189, 189, 189);
+if(mouseIsPressed){
+fill(92, 92, 92);
+exOff[1]-=1.5;
+}
+}
+rect(170,122,20,20,5);
+fill(255, 255, 255);
+textFont(F.op,30);
+text('<',147,163);
+text('>',197,163);
+text(' ^',165,147);
+text('v',171,163);
+fill(47, 0, 255,30);
+ellipse(280+exOff[0],50+exOff[1],60,60);
+fill(43, 0, 255);
+ellipse(280+exOff[0],50+exOff[1],5,5);
+}
+if(gameState==='title'){
+fill(255,0,0,50);
+ellipse(scrnSize[0],scrnSize[1],scrnSize[0],scrnSize[0]);
+
+ellipse(scrnSize[0],scrnSize[1],scrnSize[0]-50,scrnSize[0]-50);
+    if(highscore>0){
+    textFont(F.normal,20);
+    fill(0, 0, 0);
+    text('Highscore: ',5,scrnSize[1]-8);
+    fill(31, 23, 255);
+    textFont(F.big,30);
+    text(highscore,100,scrnSize[1]-8);
+    }
+fill(38, 38, 38);
+textFont(F.normal,40*2);
+textAlign(CENTER);
+text('Avoid the Colour',scrnSize[0]/2,86);
+if(dist(81,58,mouseX,mouseY)<4){
+fill(255, 0, 0);
+textSize(50);
+text('.',75.5,61);
+if(mouseIsPressed){
+gameState='sp';
+}
+}
+fill(255, 0, 0);
+textFont(F.big,40*2);
+if(deved){
+fill(18, 15, 194);
+}
+text('RED',scrnSize[0]*0.5,155);
+fill(255, 0, 230);
+var ss=2;
+textFont(F.op,20*ss);
+var sx=100;
+var sy=-30;
+var ds=100;
+var is=-40;
+var isy=30;
+textAlign(BASELINE);
+text('Play',70+sx,277+sy+20);
+text('The Dev',220+sx+ds,277+sy+20);
+text('Instructions',111+sx+is,300+sy+20+20+isy);
+if(mouseOnRect(70+sx,262+sy,40*ss,18*ss,true)){
+text('Play',71+sx,277+sy+20);
+if(mouseIsPressed){
+gameState='play';
+}
+}
+if(mouseOnRect(111+sx+is,286+sy+20+isy,104*ss,18*ss,true)){
+text('Instructions',112+sx+is,300+sy+20+20+isy);
+if(mouseIsPressed){
+gameState='ins';
+}
+}
+if(mouseOnRect(220+sx+ds,262+sy,74*ss,18*ss,true)){
+text('The Dev',221+sx+ds,277+sy+20);
+if(mouseIsPressed){
+gameState='dev';
+}
+}
+fill(47, 0, 255,30);
+ellipse(char.X,char.Y,60,60);
+fill(43, 0, 255);
+ellipse(char.X,char.Y,5,5);
+}
+
+if(gameState==='sp'){
+fill(0, 0, 0);
+textFont(F.normal,50);
+text('Oh my!',7,50);
+textFont(F.normal,20);
+text('You weren\'t supposed to see this...\n(what an embarrassment)',7,80);
+textFont(F.normal,20);
+fill(13, 25, 161);
+text('Dev Mode:',7,250);
+fill(66, 66, 66);
+rect(104,236,18,18,2);
+fill(255, 255, 255);
+if(dev){
+fill(0, 0, 0);
+}
+if(mouseOnRect(105,237,15,15,true)){
+fill(166, 166, 166);
+if(dev){
+fill(0, 0, 0);
+}
+if(mouseIsClicked){
+if(dev){
+dev=false;
+}else{
+dev=true;
+deved=true;
+}
+}
+}
+rect(105,237,15,15,2);
+fill(62, 101, 105);
+textFont(F.op,20);
+text('Back',170,377);
+if(mouseOnRect(170,362,41,13,true)){
+text('Back',171,377);
+if(mouseIsPressed){
+gameState='title';
+}
+}
+}
+if(gameState==='play'){
+    
+if(char.Y<5){
+char.YM*=-1.1;
+}
+if(char.X<5){
+char.XM*=-1.1;
+}
+if(char.Y>scrnSize[1]-5){
+char.YM*=-1.1;
+}
+if(char.X>scrnSize[0]-5){
+char.XM*=-1.1;
+}
+ticker++;
+next[2]+=-1;
+if(next[2]<=0){
+gen();
+next=[];
+//generate object here!
+}
+danger=false;
+if(ticker>cap){
+ticker=0;
+next=someWhereRandom();
+next.push(cap);
+}
+for(var g in RED.weap.cann.norm){
+fill(54, 54, 54);
+rect(RED.weap.cann.norm[g][0],RED.weap.cann.norm[g][1],20,20);
+fill(145, 145, 145);
+ellipse(RED.weap.cann.norm[g][0]+10,RED.weap.cann.norm[g][1]+10,25,25);
+fill(105, 105, 105);
+rect(RED.weap.cann.norm[g][0]+3.5,RED.weap.cann.norm[g][1]+3.5,13,13);
+RED.weap.cann.norm[g][2]+=1;
+if(RED.weap.cann.norm[g][2]>RED.weap.cann.norm[g][3]){
+gen(1,RED.weap.cann.norm[g][0]+10,RED.weap.cann.norm[g][1]+10);
+RED.weap.cann.norm[g][2]=0;
+}
+}
+for(var m in RED.weap.cann.sking){
+fill(54, 54, 54);
+rect(RED.weap.cann.sking[m][0],RED.weap.cann.sking[m][1],20,20);
+fill(133, 126, 133);
+ellipse(RED.weap.cann.sking[m][0]+10,RED.weap.cann.sking[m][1]+10,25,25);
+fill(RED.weap.cann.sking[m][2]/2+130, 130-RED.weap.cann.sking[m][2]/2, 130-RED.weap.cann.sking[m][2]/2);
+rect(RED.weap.cann.sking[m][0]+3.5,RED.weap.cann.sking[m][1]+3.5,13,13);
+RED.weap.cann.sking[m][2]+=1;
+if(RED.weap.cann.sking[m][2]>RED.weap.cann.sking[m][3]){
+gen(3,RED.weap.cann.sking[m][0]+10,RED.weap.cann.sking[m][1]+10);
+RED.weap.cann.sking[m][2]=0;
+}
+}
+for(var k in RED.weap.las){
+if(frameCount%90===0){
+score+=3;
+}
+stroke(255, 0, 0);
+strokeWeight(1.5);
+fill(0, 0, 0);
+ellipse(RED.weap.las[k][0],RED.weap.las[k][1],20,20);
+fill(255, 0, 0,20);
+var point1=[RED.weap.las[k][0]+random(-15,15),RED.weap.las[k][1]];
+var ln;
+triangle(point1[0],point1[1],RED.weap.las[k][0]+random(-15,15),RED.weap.las[k][1]+random(-15,15),RED.weap.las[k][0]+random(-15,15),RED.weap.las[k][1]+random(-15,15));
+fill(0, 0, 0);
+strokeWeight(4);
+stroke(255, 0, 0);
+line(RED.weap.las[k][0],RED.weap.las[k][1],RED.weap.las[k][2],RED.weap.las[k][3]);
+RED.weap.las[k][2]+=(char.X-RED.weap.las[k][2])/(dist(char.X,char.Y,RED.weap.las[k][2],RED.weap.las[k][3])/2);
+RED.weap.las[k][3]+=(char.Y-RED.weap.las[k][3])/(dist(char.X,char.Y,RED.weap.las[k][2],RED.weap.las[k][3])/2);
+var lsrLeng=dist(RED.weap.las[k][0],RED.weap.las[k][1],RED.weap.las[k][2],RED.weap.las[k][3]);
+for(var l=0;l<dist(RED.weap.las[k][0],RED.weap.las[k][1],RED.weap.las[k][2],RED.weap.las[k][3]);l++){
+if(char.X>RED.weap.las[k][0]){
+fill(96, 67, 168);
+//ellipse(RED.weap.las[k][0]+l,RED.weap.las[k][1]-l*findSlope(RED.weap.las[k][0],RED.weap.las[k][1],RED.weap.las[k][2],RED.weap.las[k][3]),20,20);
+if(dist(RED.weap.las[k][0]+l,RED.weap.las[k][1]-l*findSlope(RED.weap.las[k][0],RED.weap.las[k][1],RED.weap.las[k][2],RED.weap.las[k][3]),char.X,char.Y)<30.5&&lsrLeng+30>=dist(char.X,char.Y,RED.weap.las[k][0],RED.weap.las[k][1])){
+danger=true;
+}
+if(dist(RED.weap.las[k][0]+l,RED.weap.las[k][1]-l*findSlope(RED.weap.las[k][0],RED.weap.las[k][1],RED.weap.las[k][2],RED.weap.las[k][3]),char.X,char.Y)<4.5&&lsrLeng+4.5>=dist(char.X,char.Y,RED.weap.las[k][0],RED.weap.las[k][1])){
+damage();
+}
+}else if(char.X<RED.weap.las[k][0]){
+if(dist(RED.weap.las[k][0]-l,RED.weap.las[k][1]+l*findSlope(RED.weap.las[k][0],RED.weap.las[k][1],RED.weap.las[k][2],RED.weap.las[k][3]),char.X,char.Y)<30&&lsrLeng+30>=dist(char.X,char.Y,RED.weap.las[k][0],RED.weap.las[k][1])){
+danger=true;
+}
+if(dist(RED.weap.las[k][0]-l,RED.weap.las[k][1]+l*findSlope(RED.weap.las[k][0],RED.weap.las[k][1],RED.weap.las[k][2],RED.weap.las[k][3]),char.X,char.Y)<4.5&&lsrLeng+4.5>=dist(char.X,char.Y,RED.weap.las[k][0],RED.weap.las[k][1])){
+damage();
+}
+//ellipse(RED.weap.las[k][0]-l,RED.weap.las[k][1]+l*findSlope(RED.weap.las[k][0],RED.weap.las[k][1],RED.weap.las[k][2],RED.weap.las[k][3]),20,20);
+}
+}
+}
+for(var i in RED.obj.ell){
+fill(255, 0, 0);
+ellipse(RED.obj.ell[i][0],RED.obj.ell[i][1],7,7);
+RED.obj.ell[i][0]+=RED.obj.ell[i][2];
+RED.obj.ell[i][1]+=RED.obj.ell[i][3];
+if(dist(char.X,char.Y,RED.obj.ell[i][0],RED.obj.ell[i][1])<32.5){
+danger=true;
+}
+if(dist(char.X,char.Y,RED.obj.ell[i][0],RED.obj.ell[i][1])<2.5){
+damage();
+}
+}
+for(var h in RED.obj.sking){
+fill(255, 0, 0);
+ellipse(RED.obj.sking[h][0],RED.obj.sking[h][1],7,7);
+RED.obj.sking[h][0]+=(char.X-RED.obj.sking[h][0])/(dist(char.X,char.Y,RED.obj.sking[h][0],RED.obj.sking[h][1])/5);
+RED.obj.sking[h][1]+=(char.Y-RED.obj.sking[h][1])/(dist(char.X,char.Y,RED.obj.sking[h][0],RED.obj.sking[h][1])/5);
+RED.obj.sking[h][2]+=-1;
+if(RED.obj.sking[h][2]<=0){
+remove=true;
+}
+if(dist(char.X,char.Y,RED.obj.sking[h][0],RED.obj.sking[h][1])<32.5){
+danger=true;
+}
+if(dist(char.X,char.Y,RED.obj.sking[h][0],RED.obj.sking[h][1])<2.5){
+damage();
+}
+}
+if(remove&&RED.obj.sking.length>0){
+RED.obj.sking.shift();
+remove=false;
+}
+stroke(43, 0, 255);
+strokeWeight(5);
+//line(char.X,char.Y,char.X-char.XM,char.Y-char.YM);
+fill(47, 0, 255,20);
+if(danger){
+fill(255, 0, 47,20);
+}
+noStroke();
+
+ellipse(char.X,char.Y,60,60);
+fill(43, 0, 255);
+ellipse(char.X,char.Y,5,5);
+char.X+=char.XM;
+char.Y+=char.YM;
+if(keys[UP]){
+char.YM-=char.speed;
+}
+if(keys[LEFT]){
+char.XM-=char.speed;
+}
+if(keys[DOWN]){
+char.YM+=char.speed;
+}
+if(keys[RIGHT]){
+char.XM+=char.speed;
+}
+if(keyOnce[90]){
+//println(0);
+char.XM*=-1;
+char.YM*=-1;
+}
+if(!keys[UP]&&!keys[DOWN]){
+char.YM*=0.95;
+}
+if(!keys[LEFT]&&!keys[RIGHT]){
+char.XM*=0.95;
+}
+if(char.XM>maxSpeed){
+char.XM=maxSpeed;
+}
+if(char.XM<-maxSpeed){
+char.XM=-maxSpeed;
+}
+if(char.YM>maxSpeed){
+char.YM=maxSpeed;
+}
+if(char.YM<-maxSpeed){
+char.YM=-maxSpeed;
+}
+char.X+=char.XM;
+char.Y+=char.YM;
+fill(0, 85, 255);
+rect(10,scrnSize[1]-22,health,10);
+fill(4, 0, 89);
+textFont(F.op,15);
+text(health+' Health',13,scrnSize[1]-25);
+text('Score: '+score+'\nHigh: '+highscore,scrnSize[0]-100,scrnSize[1]-25);
+if(next[1]>-1){
+fill(255, 0, 0);
+textFont(F.op,24);
+text("!",next[0],next[1]);
+}
+if(health<=0){
+gameState='lose';
+}
+}
+if(gameState==='lose'){
+fill(255, 0, 0,100);
+rect(-1,-1,scrnSize[0]+2,scrnSize[1]+2);
+fill(0, 0, 0);
+textFont(F.normal,44);
+text('Pity...',50,100);
+textSize(20);
+text('You scored '+score+'\nYour best score is\n',50,120);
+fill(20, 20, 20);
+textFont(F.big,36);
+if(deved){
+fill(0, 247, 25);
+}
+text(highscore,94,177);
+textFont(F.op,20);
+if(mouseOnRect(98,187,65,20,true)){
+fill(12, 0, 74);
+text('Again?',99,201);
+if(mouseIsPressed){
+gameState='title';
+ RED={
+obj:{ //objects
+ell: [], //ellipse
+sqr: [], //rect
+sking: [] //seeking ellipses
+},
+
+weap:{ //weapons
+
+cann: { //cannons
+norm: [], //normal cannon
+sking: [] //seeking cannon
+},
+
+las: [] //laser
+}
+};   
+score=0;
+char.X=201;
+char.XM=0;
+char.Y=200;
+char.YM=0;
+health=100;
+}
+}
+text('Again?',98,201);
+}
+if(dev){
+textFont(F.info,12);
+fill(11, 138, 4);
+text('Dev Mode is enabled\nPress A to Clear Screen\nChararacter Cords:'+round(char.X)+'  '+round(char.Y)+'\nCharacter Momentum: '+round(char.XM)+'  '+round(char.YM)+'\n--Objects--\nBasic Projectiles: '+RED.obj.ell.length+'\nSeeking Projectiles: '+RED.obj.sking.length+'\nBasic Cannons: '+RED.weap.cann.norm.length+'\nSeeking Cannons:'+RED.weap.cann.sking.length+'\nLasers: '+RED.weap.las.length,0,13);
+if(keys[65]){
+ RED={
+obj:{ //objects
+ell: [], //ellipse
+sqr: [], //rect
+sking: [] //seeking ellipses
+},
+
+weap:{ //weapons
+
+cann: { //cannons
+norm: [], //normal cannon
+sking: [] //seeking canno
+},
+
+las: [] //laser
+}
+};   
+}
+}
+if(score>highscore){
+highscore=score;
+}
+mouseIsClicked=false;
+keyOnce=[];
+
+if((gameState!=='title')&&(gameState!=='play')){
+noStroke();
+fill(0,100);
+rect(0,400,scrnSize[0],scrnSize[1]);
+rect(400,0,scrnSize[0],scrnSize[1]);
+}
+if(gameState==='play'){
+strokeWeight(3);
+stroke(80,80,255);
+line(0,0,0,10000);
+line(0,0,10000,0);
+line(scrnSize[0]-1,0,scrnSize[0]-1,10000);
+line(0,scrnSize[1]-1,10000,scrnSize[1]-1);
+}
+};var keyIsPressed=false;var mousePressedPreDef=mousePressed;var mouseReleasedPreDef=mouseReleased;mousePressed=function(){mousePressedPreDef();mouseIsPressed=true;};mouseReleased=function(){mouseReleasedPreDef();mouseIsPressed=false;};}};</script> <script type="application/javascript">  var canvas = document.getElementById("mycanvas");  var processingInstance = new Processing(canvas, sketchProc);  </script><span style="position: absolute; top: 0px; left: 0px; opacity: 0; font-family: PjsEmptyFont, fantasy;">AAAAAAAA</span></body></html>
