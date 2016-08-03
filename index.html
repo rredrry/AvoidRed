@@ -96,7 +96,7 @@ var dev=0;
 var deved=false;
 var next=[];
 var ticker=0;
-var cap=100;
+var cap=80;
 var danger=false;
 var remove=false;
 var health=100;
@@ -342,10 +342,11 @@ fill(38, 38, 38);
 textFont(F.normal,40*2);
 textAlign(CENTER);
 text('Avoid the Colour',scrnSize[0]/2,86);
-if(dist(81,58,mouseX,mouseY)<4){
+
+if(dist(250,31,mouseX,mouseY)<8){
 fill(255, 0, 0);
-textSize(50);
-text('.',75.5,61);
+textSize(80);
+text('.',250,36);
 if(mouseIsPressed){
 gameState='sp';
 }
